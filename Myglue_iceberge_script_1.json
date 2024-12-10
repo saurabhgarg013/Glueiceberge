@@ -1,0 +1,49 @@
+{
+	"jobConfig": {
+		"name": "Myiceberge_job",
+		"description": "",
+		"role": "arn:aws:iam::116981782851:role/service-role/AWSGlueServiceRole-NEW",
+		"command": "glueetl",
+		"version": "4.0",
+		"runtime": null,
+		"workerType": "G.1X",
+		"numberOfWorkers": 5,
+		"maxCapacity": 5,
+		"jobRunQueuingEnabled": false,
+		"maxRetries": 0,
+		"timeout": 5,
+		"maxConcurrentRuns": 1,
+		"security": "none",
+		"scriptName": "Myiceberge_job.py",
+		"scriptLocation": "s3://aws-glue-assets-116981782851-ap-south-1/scripts/",
+		"language": "python-3",
+		"spark": true,
+		"sparkConfiguration": "standard",
+		"jobParameters": [
+			{
+				"key": "--datalake-formats",
+				"value": "iceberg",
+				"existing": false
+			}
+		],
+		"tags": [],
+		"jobMode": "DEVELOPER_MODE",
+		"createdOn": "2024-11-20T15:48:02.180Z",
+		"developerMode": true,
+		"connectionsList": [],
+		"temporaryDirectory": "s3://aws-glue-assets-116981782851-ap-south-1/temporary/",
+		"logging": true,
+		"glueHiveMetastore": true,
+		"etlAutoTuning": true,
+		"metrics": true,
+		"observabilityMetrics": true,
+		"bookmark": "job-bookmark-disable",
+		"sparkPath": "s3://aws-glue-assets-116981782851-ap-south-1/sparkHistoryLogs/",
+		"flexExecution": false,
+		"minFlexWorkers": null,
+		"maintenanceWindow": null
+	},
+	"hasBeenSaved": false,
+	"usageProfileName": null,
+	"script": "import sys\r\nfrom awsglue.transforms import *\r\nfrom awsglue.utils import getResolvedOptions\r\nfrom pyspark.context import SparkContext\r\nfrom pyspark.sql import SparkSession\r\nfrom pyspark.sql.types import *\r\nfrom awsglue.context import GlueContext\r\nfrom awsglue.job import Job\r\nfrom pyspark.sql.functions import col\r\n\r\n# AWS Glue Job arguments\r\nargs = getResolvedOptions(sys.argv, [\"JOB_NAME\"])\r\nsc = SparkContext()\r\nglueContext = GlueContext(sc)\r\njob = Job(glueContext)\r\njob.init(args[\"JOB_NAME\"], args)\r\n\r\n# Set paths and catalog\r\nwarehouse_path = 's3://my-bucket-ice/iceberg_data_2/'\r\ncatalog_nm = 'glue_catalog'\r\ndatabase_op = \"my_database_2\"\r\ntable_op = \"iceberg_table_2\"\r\n\r\n# Initialize Spark session with Iceberg configurations\r\nspark = SparkSession.builder \\\r\n    .config(f\"spark.sql.catalog.{catalog_nm}\", \"org.apache.iceberg.spark.SparkCatalog\") \\\r\n    .config(f\"spark.sql.catalog.{catalog_nm}.warehouse\", warehouse_path) \\\r\n    .config(f\"spark.sql.catalog.{catalog_nm}.catalog-impl\", \"org.apache.iceberg.aws.glue.GlueCatalog\") \\\r\n    .config(f\"spark.sql.catalog.{catalog_nm}.io-impl\", \"org.apache.iceberg.aws.s3.S3FileIO\") \\\r\n    .config(\"spark.sql.extensions\", \"org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions\") \\\r\n    .config(\"spark.sql.iceberg.handle-timestamp-without-timezone\", \"true\") \\\r\n    .getOrCreate()\r\n\r\n# Sample data for insertion\r\ndata = [\r\n    (1, 'Alice', 30, 'alice@example.com', '2024-11-19 14:00:00'),\r\n    (2, 'Bob', 25, 'bob@example.com', '2024-11-19 15:00:00'),\r\n    (3, 'Charlie', 35, 'charlie@example.com', '2024-11-20 14:00:00'),\r\n    (4, 'David', 40, 'david@example.com', '2024-11-21 15:00:00'),\r\n]\r\n\r\nschema = ['id', 'name', 'age', 'email', 'created_at'] \r\ndf = spark.createDataFrame(data, schema)\r\n\r\n# schema = StructType([\r\n#     StructField(\"id\", IntegerType(), True),\r\n#     StructField(\"name\", StringType(), True),\r\n#     StructField(\"age\", IntegerType(), True),\r\n#     StructField(\"email\", StringType(), True),\r\n#     StructField(\"created_at\", StringType(), True),\r\n# ])\r\n\r\ndf = spark.createDataFrame(data, schema)\r\n\r\n# Cast `created_at` to `TimestampType` using PySpark's `withColumn`\r\ndf = df.withColumn(\"created_at\", df[\"created_at\"].cast(\"timestamp\"))\r\n\r\n# Write the data to the Iceberg table\r\ndf.write \\\r\n    .format(\"iceberg\") \\\r\n    .mode(\"append\") \\\r\n    .save(f\"{catalog_nm}.{database_op}.{table_op}\")\r\n\r\n# Show the data\r\ndf.show()\r\n\r\njob.commit()\r\n"
+}

@@ -1,0 +1,156 @@
+CREATE DATABASE IF NOT EXISTS my_database;
+drop DATABASE my_database;
+drop TABLE my_database.csv_table;
+drop TABLE my_database.iceberg_table;
+drop TABLE my_database.iceberg_table_manipulation;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS my_database.csv_table (
+    id INT,
+    name STRING,
+    age INT,
+    email STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION 's3://my-bucket-ice/csv_data//'
+TBLPROPERTIES ("skip.header.line.count"="1");
+
+select * from my_database.csv_table;
+
+CREATE  TABLE IF NOT EXISTS my_database.iceberg_table (
+    id INT,
+    name STRING,
+    age INT,
+    email STRING
+)
+ LOCATION 's3://my-bucket-ice/iceberg_data/'
+  TBLPROPERTIES ( 'table_type' ='ICEBERG'  );
+
+CREATE  TABLE IF NOT EXISTS my_database.iceberg_table_manipulation (
+    id INT,
+    name STRING,
+    age INT,
+    email STRING
+)
+ LOCATION 's3://my-bucket-ice/iceberg_data_manipulation/'
+  TBLPROPERTIES ( 'table_type' ='ICEBERG'  );
+
+
+INSERT INTO my_database.iceberg_table
+SELECT 
+*
+FROM my_database.csv_table ;
+
+
+SELECT * FROM my_database.iceberg_table;
+
+
+
+INSERT INTO my_database.iceberg_table_manipulation
+SELECT * FROM my_database.iceberg_table;
+
+SELECT * FROM my_database.iceberg_table_manipulation;
+
+
+
+UPDATE my_database.iceberg_table_manipulation
+SET age = 55 
+WHERE id = 6 ;
+
+SELECT * FROM my_database.iceberg_table_manipulation;
+
+UPDATE my_database.iceberg_table
+SET age = 54 
+WHERE id = 6 ;
+
+SELECT * FROM my_database.iceberg_table;
+
+
+
+CREATE DATABASE IF NOT EXISTS my_database;
+
+
+drop TABLE my_database.csv_table
+CREATE EXTERNAL TABLE IF NOT EXISTS my_database.csv_table (
+    id INT,
+    name STRING,
+    age INT,
+    email STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION 's3://my-bucket-ice/csv_data//'
+TBLPROPERTIES ("skip.header.line.count"="1");
+
+select * from my_database.csv_table;
+
+CREATE  TABLE IF NOT EXISTS my_database.iceberg_table (
+    id INT,
+    name STRING,
+    age INT,
+    email STRING
+)
+ LOCATION 's3://my-bucket-ice/iceberg_data/'
+  TBLPROPERTIES ( 'table_type' ='ICEBERG'  );
+
+CREATE  TABLE IF NOT EXISTS my_database.iceberg_table_manipulation (
+    id INT,
+    name STRING,
+    age INT,
+    email STRING
+)
+ LOCATION 's3://my-bucket-ice/iceberg_data_manipulation/'
+  TBLPROPERTIES ( 'table_type' ='ICEBERG'  );
+
+
+INSERT INTO my_database.iceberg_table
+SELECT 
+*
+FROM my_database.csv_table ;
+
+
+SELECT * FROM my_database.iceberg_table;
+
+
+
+INSERT INTO my_database.iceberg_table_manipulation
+SELECT * FROM my_database.iceberg_table;
+
+SELECT * FROM my_database.iceberg_table_manipulation;
+
+
+
+UPDATE my_database.iceberg_table_manipulation
+SET age = 55 
+WHERE id = 6 ;
+
+SELECT * FROM my_database.iceberg_table_manipulation;
+
+UPDATE my_database.iceberg_table
+SET age = 54 
+WHERE id = 6 ;
+
+SELECT * FROM my_database.iceberg_table;
+
+
+SELECT * FROM my_database.iceberg_table.history;
+SELECT * FROM my_database.iceberg_table.history;
+
+SELECT * FROM my_database.iceberg_table
+FOR SYSTEM_TIME AS OF timestamp '2023-11-18 10:00:00';
+
+
+-- Why Create Two Iceberg Tables?
+-- iceberg_table: This table is used to store data as initially loaded from the CSV table.
+-- iceberg_table_manipulation:This table is for performing DML (Data Manipulation Language)
+--                           operations like updates, demonstrating Iceberg's capabilities 
+--                           for handling ACID (Atomicity, Consistency, Isolation, Durability) transactions.
+
+
+
+
+
+
+
