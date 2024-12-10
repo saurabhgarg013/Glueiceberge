@@ -1,1 +1,125 @@
+Apache Iceberg and Athena on S3: Overview and Benefits
+Apache Iceberg is an open table format designed for managing petabyte-scale datasets. 
+When combined with Amazon Athena, it enables powerful, serverless querying and 
+data management capabilities on S3. Iceberg's advanced features, 
+such as schema evolution, time travel, and support for updates and deletes, 
+make it a great choice for modern data lakehouse architectures.
+
+
+Iceberg's features like ACID transactions, schema evolution, and time travel enhance the capabilities of a data lake.
+
+
+
+CREATE TABLE iceberg_db.iceberg_table (
+    id INT,
+    name STRING,
+    age INT,
+    country STRING
+)
+LOCATION 's3://your-bucket/iceberg-table/'
+TBLPROPERTIES (
+    'table_type'='ICEBERG'
+);
+
+
+LOCATION: Points to the S3 bucket where the data and metadata for the table will be stored.
+TBLPROPERTIES: Specifies the table format as Iceberg.
+
+INSERT INTO iceberg_db.iceberg_table VALUES
+(1, 'Alice', 30, 'USA'),
+(2, 'Bob', 25, 'Canada'),
+(3, 'Charlie', 35, 'UK');
+
+SELECT * FROM iceberg_db.iceberg_table WHERE age > 25;
+
+
+
+Apache Iceberg and Athena on S3: Overview and Benefits
+Apache Iceberg is an open table format designed for managing petabyte-scale datasets. When combined with Amazon Athena, it enables powerful, serverless querying and data management capabilities on S3. Iceberg's advanced features, such as schema evolution, time travel, and support for updates and deletes, make it a great choice for modern data lakehouse architectures.
+
+Steps to Create and Query Iceberg Tables in Athena
+Set Up Iceberg Table in Athena:
+
+Apache Iceberg requires you to configure a Glue catalog or Hive catalog for Athena.
+S3 will act as the storage layer for table data and metadata.
+Create Iceberg Table:
+
+sql
+Copy code
+CREATE TABLE iceberg_db.iceberg_table (
+    id INT,
+    name STRING,
+    age INT,
+    country STRING
+)
+LOCATION 's3://your-bucket/iceberg-table/'
+TBLPROPERTIES (
+    'table_type'='ICEBERG'
+);
+LOCATION: Points to the S3 bucket where the data and metadata for the table will be stored.
+TBLPROPERTIES: Specifies the table format as Iceberg.
+Insert Data into Iceberg Table:
+
+sql
+Copy code
+INSERT INTO iceberg_db.iceberg_table VALUES
+(1, 'Alice', 30, 'USA'),
+(2, 'Bob', 25, 'Canada'),
+(3, 'Charlie', 35, 'UK');
+Query Data:
+
+
+SELECT * FROM iceberg_db.iceberg_table WHERE age > 25;
+
+
+Update and Delete Commands (Iceberg Feature)
+Unlike traditional Athena tables (Parquet or ORC), Iceberg supports DML commands like UPDATE and DELETE. Here's an example:
+
+Update Records:
+
+UPDATE iceberg_db.iceberg_table
+SET country = 'United Kingdom'
+WHERE name = 'Charlie';
+
+Conclusion
+The combination of Iceberg and Athena allows for:
+
+Cost-effectiveness: Query data stored in S3 without dedicated infrastructure.
+Flexibility: Perform updates, deletes, and schema modifications seamlessly.
+High Performance: Query only relevant partitions/files with efficient pruning and metadata management.
+
+
+ETL with Glue Jobs:
+
+Glue supports running ETL jobs on Iceberg tables using Spark.
+This means you can use Glue to perform transformations, updates, and inserts into Iceberg tables stored in S3.
+
+
+CREATE TABLE glue_catalog.iceberg_db.iceberg_table (
+    id INT,
+    name STRING,
+    age INT
+)
+USING iceberg
+LOCATION 's3://your-bucket/iceberg-table/';
+
+
+Use AWS Glue PySpark jobs to process data for Iceberg tables.
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder \
+    .appName("GlueIcebergJob") \
+    .config("spark.sql.catalog.glue_catalog", "org.apache.iceberg.aws.glue.GlueCatalog") \
+    .config("spark.sql.catalog.glue_catalog.warehouse", "s3://your-bucket/") \
+    .getOrCreate()
+
+# Read data from an Iceberg table
+df = spark.read.format("iceberg").load("glue_catalog.iceberg_db.iceberg_table")
+
+# Perform transformations
+transformed_df = df.withColumn("age", df.age + 1)
+
+# Write back to the Iceberg table
+transformed_df.write.format("iceberg").mode("overwrite").save("glue_catalog.iceberg_db.iceberg_table")
+
 
